@@ -229,3 +229,46 @@ Verification:
 - Live dashboard showed `Mode Admin Pusat`.
 - `/v3/login.php` remained verified with e-Billing DSG marker.
 - `/nms/` remained responsive.
+
+## Stage 1.6 — Tenant UI aligned to AppsBilling V3 (2026-07-16)
+
+Status: completed and live.
+
+Correction from user:
+- Tenant app should look and behave like the existing AppsBilling V3 at `/v3`, not like a different platform shell.
+- Each tenant should get the same functions/menus, with No Akun as identity and a separate empty DB.
+
+Implemented safely:
+- Tenant dashboard now uses an AppsBilling V3-like/AdminLTE layout: yellow topbar, dark sidebar, e-Billing DSG branding, grouped V3 menu structure, stat cards, breadcrumb/header, and footer.
+- Tenant menu mirrors the major V3 groups:
+  - Dashboard
+  - Kelola data
+  - Admin sistem
+  - Corporate
+  - Kelola pembayaran
+  - Kelola PPPoE
+- Tenant header/topbar shows No Akun.
+- Dashboard explicitly shows tenant instance as `Tenant kosong · DB terpisah`.
+- Data pelanggan page uses V3-style table and empty state while reading from tenant DB.
+- Branding/logo settings moved visually into the V3-style Admin sistem flow via `page=branding-settings`.
+- Direct `/tenant/settings.php` still works and renders with the V3-style layout.
+- Existing master admin login remains supported and shows `Mode Admin Pusat`.
+
+Important scope note:
+- This stage aligns the tenant shell/UI/menus with AppsBilling V3 and keeps data isolated.
+- Full V3 feature parity is still a staged port: each menu must be wired to the tenant DB without touching the original live `/v3` instance.
+- Original `/v3` remains preserved and untouched.
+
+Backup before deploy:
+- `/home/ubuntu/backups/appsbilling-before-tenant-v3-style-20260716-002005.tar.gz`
+
+Verification:
+- Local syntax checks passed.
+- Local master tenant login passed.
+- Local tenant dashboard markers verified: e-Billing DSG, Kelola data, No Akun, Mode Admin Pusat, empty customer page, branding page.
+- Live deploy syntax checks passed.
+- Live master tenant login passed using active No Akun.
+- Live tenant dashboard verified with V3-style markers: e-Billing DSG System, Billing Management System, Kelola data, Kelola pembayaran, Kelola PPPoE, No Akun, Tenant kosong.
+- Live data-warga and branding pages verified.
+- Original `/v3/login.php` still verified with e-Billing DSG marker.
+- `/nms/` still responds normally.
