@@ -201,3 +201,31 @@ Verification:
 - Live flow passed with `MRT NET FITUR LIVE ...`: register → pending login notice with WhatsApp admin → admin detail → approve → tenant login → logo settings → upload logo → public logo URL HTTP 200.
 - `/v3/login.php` still verified with e-Billing DSG marker.
 - `/nms/` still responds normally.
+
+## Stage 1.5 — Master Admin Tenant Login (2026-07-16)
+
+Status: completed and live.
+
+User request:
+- Admin username `ananta` with the central admin password can login to any tenant No Akun.
+
+Implemented:
+- Tenant login now supports master admin login:
+  - No Akun Mitra: any active tenant account number.
+  - Username: `ananta`.
+  - Password: validated against central `platform_admins.password_hash`, not stored plaintext.
+- Master admin login does not create tenant users.
+- Session is marked as `tenant_master_admin` and dashboard shows `Mode Admin Pusat`.
+- Login event is recorded as `tenant_master_login` with actor type `platform_admin`.
+- Normal tenant user login still works.
+- Pending/disabled tenants still cannot be accessed and continue showing admin contact notice.
+
+Backup before deploy:
+- `/home/ubuntu/backups/appsbilling-before-master-tenant-login-20260716-000449.tar.gz`
+
+Verification:
+- Local master login test passed.
+- Live master login test passed using an active No Akun and `ananta`.
+- Live dashboard showed `Mode Admin Pusat`.
+- `/v3/login.php` remained verified with e-Billing DSG marker.
+- `/nms/` remained responsive.

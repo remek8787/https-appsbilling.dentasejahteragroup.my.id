@@ -154,6 +154,12 @@ function app_url(string $path=''): string {
     return $prefix.'/'.ltrim($path,'/');
 }
 
+function verify_platform_admin_login(string $username,string $password): ?array {
+    $row=q1('SELECT * FROM platform_admins WHERE username=? AND status=?',[$username,'active']);
+    if($row && password_verify($password,$row['password_hash'])) return $row;
+    return null;
+}
+
 function require_superadmin(): array {
     $id=$_SESSION['superadmin_id']??0;
     if(!$id) redirect(app_url('superadmin/login.php'));
@@ -162,9 +168,28 @@ function require_superadmin(): array {
     return $u;
 }
 function current_tenant_user(): ?array {
+    if(!empty($_SESSION['tenant_master_admin']) && !empty($_SESSION['tenant_master_tenant_id'])){
+        $t=q1('SELECT * FROM tenants WHERE id=? AND status=?',[(int)$_SESSION['tenant_master_tenant_id'],'active']);
+        if(!$t){ unset($_SESSION['tenant_master_admin'],$_SESSION['tenant_master_tenant_id']); return null; }
+        return [
+            'id'=>0,
+            'tenant_id'=>(int)$t['id'],
+            'username'=>(string)($_SESSION['tenant_master_username'] ?? 'ananta'),
+            'name'=>'Admin Pusat',
+            'role'=>'master_admin',
+            'status'=>'active',
+            'tenant_uid'=>$t['tenant_uid'],
+            'slug'=>$t['slug'],
+            'account_no'=>$t['account_no'],
+            'company_name'=>$t['company_name'],
+            'tenant_status'=>$t['status'],
+            'is_master_admin'=>true,
+        ];
+    }
     $uid=$_SESSION['tenant_user_id']??0; if(!$uid) return null;
     $u=q1('SELECT tu.*,t.tenant_uid,t.slug,t.account_no,t.company_name,t.status tenant_status FROM tenant_users tu JOIN tenants t ON t.id=tu.tenant_id WHERE tu.id=?',[(int)$uid]);
     if(!$u || $u['status']!=='active' || $u['tenant_status']!=='active'){ unset($_SESSION['tenant_user_id']); return null; }
+    $u['is_master_admin']=false;
     return $u;
 }
 function require_tenant_user(): array { $u=current_tenant_user(); if(!$u) redirect(app_url('tenant/login.php')); return $u; }
