@@ -214,7 +214,8 @@ function provision_tenant_db(string $path,array $tenant): void {
     $pdo->exec("CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS packages(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,speed TEXT NOT NULL DEFAULT '',price INTEGER NOT NULL DEFAULT 0,is_active INTEGER NOT NULL DEFAULT 1,status TEXT NOT NULL DEFAULT 'active',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS bank_accounts(id INTEGER PRIMARY KEY AUTOINCREMENT,bank_name TEXT NOT NULL,account_number TEXT NOT NULL DEFAULT '',account_name TEXT NOT NULL DEFAULT '',label TEXT NOT NULL DEFAULT '',is_active INTEGER NOT NULL DEFAULT 1,notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS customers(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_code TEXT UNIQUE,name TEXT NOT NULL,address TEXT,phone TEXT,package_id INTEGER,status TEXT NOT NULL DEFAULT 'active',due_day INTEGER DEFAULT 20,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS customers(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_code TEXT UNIQUE,name TEXT NOT NULL,address TEXT NOT NULL DEFAULT '',phone TEXT NOT NULL DEFAULT '',package_id INTEGER,registered_at TEXT NOT NULL DEFAULT '',due_day INTEGER NOT NULL DEFAULT 20,is_active INTEGER NOT NULL DEFAULT 1,status TEXT NOT NULL DEFAULT 'active',customer_status TEXT NOT NULL DEFAULT 'active',area_name TEXT NOT NULL DEFAULT '',latitude TEXT NOT NULL DEFAULT '',longitude TEXT NOT NULL DEFAULT '',map_note TEXT NOT NULL DEFAULT '',router_name TEXT NOT NULL DEFAULT '',pppoe_username TEXT NOT NULL DEFAULT '',onu_name TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT '')");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS customer_events(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,event_type TEXT NOT NULL,title TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',actor TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_code TEXT UNIQUE,customer_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,paid_amount INTEGER DEFAULT 0,balance_amount INTEGER DEFAULT 0,status TEXT DEFAULT 'unpaid',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,payment_code TEXT UNIQUE,customer_id INTEGER,invoice_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,method TEXT,paid_at TEXT,notes TEXT,bank_account_id INTEGER)");
     $st=$pdo->prepare('INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)');
@@ -237,10 +238,32 @@ function tenant_ensure_v3_core_schema(PDO $pdo): void {
     if(!isset($cols['created_at'])) $pdo->exec("ALTER TABLE packages ADD COLUMN created_at TEXT NOT NULL DEFAULT ''");
     $pdo->exec("UPDATE packages SET is_active=CASE WHEN COALESCE(status,'active')='active' THEN 1 ELSE 0 END WHERE is_active IS NULL");
     $pdo->exec("CREATE TABLE IF NOT EXISTS bank_accounts(id INTEGER PRIMARY KEY AUTOINCREMENT,bank_name TEXT NOT NULL,account_number TEXT NOT NULL DEFAULT '',account_name TEXT NOT NULL DEFAULT '',label TEXT NOT NULL DEFAULT '',is_active INTEGER NOT NULL DEFAULT 1,notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS customers(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_code TEXT UNIQUE,name TEXT NOT NULL,address TEXT,phone TEXT,package_id INTEGER,status TEXT NOT NULL DEFAULT 'active',due_day INTEGER DEFAULT 20,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS customers(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_code TEXT UNIQUE,name TEXT NOT NULL,address TEXT NOT NULL DEFAULT '',phone TEXT NOT NULL DEFAULT '',package_id INTEGER,registered_at TEXT NOT NULL DEFAULT '',due_day INTEGER NOT NULL DEFAULT 20,is_active INTEGER NOT NULL DEFAULT 1,status TEXT NOT NULL DEFAULT 'active',customer_status TEXT NOT NULL DEFAULT 'active',area_name TEXT NOT NULL DEFAULT '',latitude TEXT NOT NULL DEFAULT '',longitude TEXT NOT NULL DEFAULT '',map_note TEXT NOT NULL DEFAULT '',router_name TEXT NOT NULL DEFAULT '',pppoe_username TEXT NOT NULL DEFAULT '',onu_name TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT '')");
+    $cols=tenant_db_columns($pdo,'customers');
+    foreach(['registered_at'=>"TEXT NOT NULL DEFAULT ''",'is_active'=>"INTEGER NOT NULL DEFAULT 1",'customer_status'=>"TEXT NOT NULL DEFAULT 'active'",'area_name'=>"TEXT NOT NULL DEFAULT ''",'latitude'=>"TEXT NOT NULL DEFAULT ''",'longitude'=>"TEXT NOT NULL DEFAULT ''",'map_note'=>"TEXT NOT NULL DEFAULT ''",'router_name'=>"TEXT NOT NULL DEFAULT ''",'pppoe_username'=>"TEXT NOT NULL DEFAULT ''",'onu_name'=>"TEXT NOT NULL DEFAULT ''",'notes'=>"TEXT NOT NULL DEFAULT ''",'updated_at'=>"TEXT NOT NULL DEFAULT ''"] as $col=>$def){ if(!isset($cols[$col])) $pdo->exec("ALTER TABLE customers ADD COLUMN $col $def"); }
+    $pdo->exec("UPDATE customers SET customer_status=COALESCE(NULLIF(customer_status,''),NULLIF(status,''),'active')");
+    $pdo->exec("UPDATE customers SET is_active=CASE WHEN customer_status='active' THEN 1 ELSE 0 END WHERE is_active IS NULL OR is_active NOT IN (0,1)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS customer_events(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,event_type TEXT NOT NULL,title TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',actor TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tenant_customers_status ON customers(customer_status,is_active)");
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tenant_customers_search ON customers(customer_code,name,phone,pppoe_username,onu_name)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_code TEXT UNIQUE,customer_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,paid_amount INTEGER DEFAULT 0,balance_amount INTEGER DEFAULT 0,status TEXT DEFAULT 'unpaid',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,payment_code TEXT UNIQUE,customer_id INTEGER,invoice_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,method TEXT,paid_at TEXT,notes TEXT,bank_account_id INTEGER)");
 }
+
+function tenant_customer_code(PDO $pdo,string $input='',int $ignoreId=0): string {
+    $input=strtoupper(trim($input));
+    if($input!=='' && preg_match('/^DN[0-9]{10}$/',$input)) return $input;
+    do { $code='DN'.str_pad((string)random_int(0,9999999999),10,'0',STR_PAD_LEFT); $st=$pdo->prepare('SELECT id FROM customers WHERE customer_code=? AND id<>? LIMIT 1'); $st->execute([$code,$ignoreId]); } while($st->fetch());
+    return $code;
+}
+function tenant_parse_latlng(string $lat='',string $lng='',string $raw=''): array {
+    $lat=trim($lat); $lng=trim($lng); $raw=trim($raw);
+    if(($lat==='' || $lng==='') && $raw!=='' && preg_match('/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/',$raw,$m)){ $lat=$m[1]; $lng=$m[2]; }
+    if($lat!=='' && $lng!=='' && is_numeric($lat) && is_numeric($lng)) return [$lat,$lng];
+    return ['',''];
+}
+function tenant_page_url(string $page,array $extra=[]): string { return 'dashboard.php?'.http_build_query(array_merge(['page'=>$page],$extra)); }
+
 function tenant_money(int $n): string { return 'Rp '.number_format($n,0,',','.'); }
 function tenant_changed_summary(?array $before,?array $after): string {
     if(!$before || !$after) return '';

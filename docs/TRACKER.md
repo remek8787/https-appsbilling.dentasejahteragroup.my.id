@@ -359,3 +359,41 @@ Next porting priority:
 - Tagihan.
 - Pembayaran.
 - Kwitansi/print with tenant logo.
+
+## Stage 2.2 — Tenant V3 Core CRUD: Data Pelanggan + Tambah Pelanggan (2026-07-16)
+
+Status: completed and live.
+
+Implemented:
+- Tenant customer schema migrated toward V3 fields:
+  - `registered_at`, `due_day`, `is_active`, `customer_status`, `area_name`, `latitude`, `longitude`, `map_note`, `router_name`, `pppoe_username`, `onu_name`, `notes`, `updated_at`.
+- Existing tenant DBs auto-migrate on dashboard load.
+- Added `customer_events` for tenant customer audit events.
+- Added real customer form for:
+  - `/tenant/dashboard.php?page=add-warga`
+  - `/tenant/dashboard.php?page=add-pelanggan-off`
+- Added real customer lists for:
+  - `/tenant/dashboard.php?page=data-warga`
+  - `/tenant/dashboard.php?page=data-pelanggan-free`
+  - `/tenant/dashboard.php?page=data-pelanggan-off`
+- Customer list supports search by ID, name, address, phone, PPPoE username, and secret.
+- Customer save/delete actions write to tenant DB only.
+- ID customer auto-generates as `DN + 10 digits` when empty, matching V3 direction.
+
+Backup before deploy:
+- `/home/ubuntu/backups/appsbilling-before-tenant-customers-20260716-005916.tar.gz`
+
+Verification:
+- Local syntax passed.
+- Local tenant login passed.
+- Local add customer passed.
+- Local customer list/search by PPPoE passed.
+- Live deploy syntax passed.
+- Live add customer passed using active tenant No Akun.
+- Live customer list/search by PPPoE passed.
+- `/v3/login.php` remained verified.
+- `/nms/` remained responsive.
+
+Next porting priority:
+- Tagihan/invoice generation and manual add-tagihan.
+- Pembayaran tenant with package price, bank account selection, duplicate guard, and receipt/print using tenant logo.
