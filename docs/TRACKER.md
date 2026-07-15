@@ -427,3 +427,27 @@ Verification:
 Notes:
 - Receipt print has engine-path fallback because live tenant files are served from `/var/www/appsbilling.dentasejahteragroup.my.id/tenant`, while core bootstrap lives under `/var/www/appsbilling-commercial-platform/app/bootstrap.php`.
 - This is functional parity groundwork; visual polish and smaller tenant UX improvements should wait until main V3 feature modules are broadly usable.
+
+## 2026-07-16 01:21 UTC — Tenant V3 corporate core
+
+Status: deployed + smoke tested live.
+
+Implemented:
+- Tenant corporate schema:
+  - `corporate_customers`
+  - `corporate_invoices`
+- Real tenant corporate pages replacing fallback/placeholder:
+  - `corporate-customers`
+  - `add-corporate-customer`
+  - `corporate-invoices`
+  - `add-corporate-invoice`
+- Corporate invoice payment marking with paid/balance/status update.
+
+Verification:
+- Local smoke: add corporate -> create corporate invoice -> mark paid -> status Lunas OK.
+- Live deploy backup: `/home/ubuntu/backups/appsbilling-before-tenant-corporate-20260716-012007.tar.gz`.
+- Live PHP lint OK.
+- Live smoke: `LIVE_CORPORATE_OK corp=1 invoice=1`.
+
+Notes:
+- Corporate invoice is functional core first; print/PDF corporate invoice can be polished later after all V3 feature modules are usable per tenant.
