@@ -319,3 +319,43 @@ Implementation implication:
 - Build/port a tenant-aware V3 clone engine.
 - Do not invent a separate tenant UX.
 - Keep private `/v3` separate and untouched.
+
+## Stage 2.1 — Tenant V3 Core CRUD: Tipe Pembayaran + Rekening (2026-07-16)
+
+Status: completed and live.
+
+User concern:
+- Tenant features were still not 100% functional; menus like `Tambah tipe pembayaran` and `Tambah rekening` were placeholders.
+- User expects tenant system to function like `/v3`, with each No Akun/slug having its own empty DB.
+
+Implemented:
+- Tenant DB schema now migrates toward V3 core compatibility for:
+  - `packages`: `name`, `speed`, `price`, `is_active`, `status`, `created_at`.
+  - `bank_accounts`: `bank_name`, `account_number`, `account_name`, `label`, `is_active`, `notes`, `created_at`.
+- Existing tenant DBs auto-migrate safely when tenant dashboard loads.
+- `tenant/dashboard.php?page=add-package` is now a real V3-style form and saves to that tenant DB.
+- `tenant/dashboard.php?page=data-tipe-pembayaran` now lists saved tenant packages/tipe pembayaran with active/inactive state and customer count.
+- `tenant/dashboard.php?page=add-bank` is now a real V3-style form and saves to that tenant DB.
+- `tenant/dashboard.php?page=data-rekening` now lists saved tenant bank accounts/rekening.
+- Basic archive package and delete bank actions added.
+- Actions log to platform tenant events.
+
+Backup before deploy:
+- `/home/ubuntu/backups/appsbilling-before-tenant-package-bank-20260716-004257.tar.gz`
+
+Verification:
+- Local syntax passed.
+- Local master tenant login passed.
+- Local add package → list package passed and data stored in tenant DB.
+- Local add bank → list bank passed and data stored in tenant DB.
+- Live deploy syntax passed.
+- Live add package → list package passed using active tenant No Akun.
+- Live add bank → list bank passed using active tenant No Akun.
+- Original `/v3/login.php` remained verified.
+- `/nms/` remained responsive.
+
+Next porting priority:
+- Data pelanggan + tambah/edit pelanggan.
+- Tagihan.
+- Pembayaran.
+- Kwitansi/print with tenant logo.
