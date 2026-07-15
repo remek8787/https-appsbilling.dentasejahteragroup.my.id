@@ -1,0 +1,24 @@
+{
+  "error": true,
+  "url": "https://coret.id/api/v1/maps/019f664d-ae78-7469-85cc-81228d0eb795/sketch",
+  "statusCode": 400,
+  "statusMessage": "Server Error",
+  "message": "",
+  "data": {
+    "error": {
+      "code": "validation_error",
+      "message": "Input sketch tidak valid.",
+      "details": {
+        "fields": [
+          {
+            "field": "body",
+            "message": "elements[1].x harus berupa number."
+          }
+        ]
+      }
+    },
+    "meta": {
+      "requestId": "019f664e-c7d1-7759-8ef4-34875f09fc13"
+    }
+  }
+}

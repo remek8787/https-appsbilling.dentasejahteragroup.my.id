@@ -1,0 +1,19 @@
+# runtime / secrets
+.env
+.env.*
+!.env.example
+/data/
+/storage/
+/backups/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+error_log
+/vendor/
+node_modules/
+
+# local state
+/state/*.json
+/state/*.sqlite
+.DS_Store
