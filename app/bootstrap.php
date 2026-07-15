@@ -216,8 +216,14 @@ function provision_tenant_db(string $path,array $tenant): void {
     $pdo->exec("CREATE TABLE IF NOT EXISTS bank_accounts(id INTEGER PRIMARY KEY AUTOINCREMENT,bank_name TEXT NOT NULL,account_number TEXT NOT NULL DEFAULT '',account_name TEXT NOT NULL DEFAULT '',label TEXT NOT NULL DEFAULT '',is_active INTEGER NOT NULL DEFAULT 1,notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec("CREATE TABLE IF NOT EXISTS customers(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_code TEXT UNIQUE,name TEXT NOT NULL,address TEXT NOT NULL DEFAULT '',phone TEXT NOT NULL DEFAULT '',package_id INTEGER,registered_at TEXT NOT NULL DEFAULT '',due_day INTEGER NOT NULL DEFAULT 20,is_active INTEGER NOT NULL DEFAULT 1,status TEXT NOT NULL DEFAULT 'active',customer_status TEXT NOT NULL DEFAULT 'active',area_name TEXT NOT NULL DEFAULT '',latitude TEXT NOT NULL DEFAULT '',longitude TEXT NOT NULL DEFAULT '',map_note TEXT NOT NULL DEFAULT '',router_name TEXT NOT NULL DEFAULT '',pppoe_username TEXT NOT NULL DEFAULT '',onu_name TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT '')");
     $pdo->exec("CREATE TABLE IF NOT EXISTS customer_events(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,event_type TEXT NOT NULL,title TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',actor TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_code TEXT UNIQUE,customer_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,paid_amount INTEGER DEFAULT 0,balance_amount INTEGER DEFAULT 0,status TEXT DEFAULT 'unpaid',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,payment_code TEXT UNIQUE,customer_id INTEGER,invoice_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,method TEXT,paid_at TEXT,notes TEXT,bank_account_id INTEGER)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_code TEXT UNIQUE,customer_id INTEGER NOT NULL,invoice_month TEXT NOT NULL,amount INTEGER NOT NULL DEFAULT 0,original_amount INTEGER NOT NULL DEFAULT 0,discount_amount INTEGER NOT NULL DEFAULT 0,discount_note TEXT NOT NULL DEFAULT '',paid_amount INTEGER NOT NULL DEFAULT 0,balance_amount INTEGER NOT NULL DEFAULT 0,due_day INTEGER NOT NULL DEFAULT 20,status TEXT NOT NULL DEFAULT 'unpaid',generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,paid_at TEXT NOT NULL DEFAULT '',payment_id INTEGER,notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(customer_id,invoice_month))");
+    $cols=tenant_db_columns($pdo,'invoices');
+    foreach(['original_amount'=>"INTEGER NOT NULL DEFAULT 0",'discount_amount'=>"INTEGER NOT NULL DEFAULT 0",'discount_note'=>"TEXT NOT NULL DEFAULT ''",'paid_amount'=>"INTEGER NOT NULL DEFAULT 0",'balance_amount'=>"INTEGER NOT NULL DEFAULT 0",'due_day'=>"INTEGER NOT NULL DEFAULT 20",'generated_at'=>"TEXT NOT NULL DEFAULT ''",'paid_at'=>"TEXT NOT NULL DEFAULT ''",'payment_id'=>"INTEGER",'notes'=>"TEXT NOT NULL DEFAULT ''"] as $col=>$def){ if(!isset($cols[$col])) $pdo->exec("ALTER TABLE invoices ADD COLUMN $col $def"); }
+    $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_tenant_invoices_customer_month ON invoices(customer_id,invoice_month)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,payment_code TEXT UNIQUE,customer_id INTEGER NOT NULL,invoice_id INTEGER,invoice_month TEXT NOT NULL,amount INTEGER NOT NULL DEFAULT 0,method TEXT NOT NULL DEFAULT 'Cash',paid_at TEXT NOT NULL,received_by TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',bank_account_id INTEGER,source_system TEXT NOT NULL DEFAULT '',source_ref TEXT NOT NULL DEFAULT '',collector_note TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    $cols=tenant_db_columns($pdo,'payments');
+    foreach(['received_by'=>"TEXT NOT NULL DEFAULT ''",'bank_account_id'=>"INTEGER",'source_system'=>"TEXT NOT NULL DEFAULT ''",'source_ref'=>"TEXT NOT NULL DEFAULT ''",'collector_note'=>"TEXT NOT NULL DEFAULT ''",'created_at'=>"TEXT NOT NULL DEFAULT ''"] as $col=>$def){ if(!isset($cols[$col])) $pdo->exec("ALTER TABLE payments ADD COLUMN $col $def"); }
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tenant_payments_customer_month ON payments(customer_id,invoice_month)");
     $st=$pdo->prepare('INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)');
     $st->execute(['office_brand',$tenant['company_name']]);
     $st->execute(['tenant_uid',$tenant['tenant_uid']]);
@@ -246,8 +252,45 @@ function tenant_ensure_v3_core_schema(PDO $pdo): void {
     $pdo->exec("CREATE TABLE IF NOT EXISTS customer_events(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INTEGER,event_type TEXT NOT NULL,title TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',actor TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tenant_customers_status ON customers(customer_status,is_active)");
     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tenant_customers_search ON customers(customer_code,name,phone,pppoe_username,onu_name)");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_code TEXT UNIQUE,customer_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,paid_amount INTEGER DEFAULT 0,balance_amount INTEGER DEFAULT 0,status TEXT DEFAULT 'unpaid',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,payment_code TEXT UNIQUE,customer_id INTEGER,invoice_id INTEGER,invoice_month TEXT,amount INTEGER DEFAULT 0,method TEXT,paid_at TEXT,notes TEXT,bank_account_id INTEGER)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_code TEXT UNIQUE,customer_id INTEGER NOT NULL,invoice_month TEXT NOT NULL,amount INTEGER NOT NULL DEFAULT 0,original_amount INTEGER NOT NULL DEFAULT 0,discount_amount INTEGER NOT NULL DEFAULT 0,discount_note TEXT NOT NULL DEFAULT '',paid_amount INTEGER NOT NULL DEFAULT 0,balance_amount INTEGER NOT NULL DEFAULT 0,due_day INTEGER NOT NULL DEFAULT 20,status TEXT NOT NULL DEFAULT 'unpaid',generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,paid_at TEXT NOT NULL DEFAULT '',payment_id INTEGER,notes TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(customer_id,invoice_month))");
+    $cols=tenant_db_columns($pdo,'invoices');
+    foreach(['original_amount'=>"INTEGER NOT NULL DEFAULT 0",'discount_amount'=>"INTEGER NOT NULL DEFAULT 0",'discount_note'=>"TEXT NOT NULL DEFAULT ''",'paid_amount'=>"INTEGER NOT NULL DEFAULT 0",'balance_amount'=>"INTEGER NOT NULL DEFAULT 0",'due_day'=>"INTEGER NOT NULL DEFAULT 20",'generated_at'=>"TEXT NOT NULL DEFAULT ''",'paid_at'=>"TEXT NOT NULL DEFAULT ''",'payment_id'=>"INTEGER",'notes'=>"TEXT NOT NULL DEFAULT ''"] as $col=>$def){ if(!isset($cols[$col])) $pdo->exec("ALTER TABLE invoices ADD COLUMN $col $def"); }
+    $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_tenant_invoices_customer_month ON invoices(customer_id,invoice_month)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payments(id INTEGER PRIMARY KEY AUTOINCREMENT,payment_code TEXT UNIQUE,customer_id INTEGER NOT NULL,invoice_id INTEGER,invoice_month TEXT NOT NULL,amount INTEGER NOT NULL DEFAULT 0,method TEXT NOT NULL DEFAULT 'Cash',paid_at TEXT NOT NULL,received_by TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',bank_account_id INTEGER,source_system TEXT NOT NULL DEFAULT '',source_ref TEXT NOT NULL DEFAULT '',collector_note TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    $cols=tenant_db_columns($pdo,'payments');
+    foreach(['received_by'=>"TEXT NOT NULL DEFAULT ''",'bank_account_id'=>"INTEGER",'source_system'=>"TEXT NOT NULL DEFAULT ''",'source_ref'=>"TEXT NOT NULL DEFAULT ''",'collector_note'=>"TEXT NOT NULL DEFAULT ''",'created_at'=>"TEXT NOT NULL DEFAULT ''"] as $col=>$def){ if(!isset($cols[$col])) $pdo->exec("ALTER TABLE payments ADD COLUMN $col $def"); }
+    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_tenant_payments_customer_month ON payments(customer_id,invoice_month)");
+}
+
+
+function tenant_current_month(): string { return date('Y-m'); }
+function tenant_invoice_code(int $customerId,string $month): string { return 'INV-'.str_pad((string)$customerId,5,'0',STR_PAD_LEFT).'-'.str_replace('-','',$month); }
+function tenant_payment_code(): string { return 'PAY-'.date('Ymd-His').'-'.random_int(100,999); }
+function tenant_normalize_datetime(string $value='',?string $fallback=null): string {
+    $value=trim($value); if($value==='') return $fallback ?: date('Y-m-d H:i:s');
+    $value=str_replace('T',' ',$value); if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/',$value)) $value.=':00';
+    return $value;
+}
+function tenant_recalc_invoice(PDO $pdo,int $customerId,string $month): void {
+    $st=$pdo->prepare('SELECT * FROM invoices WHERE customer_id=? AND invoice_month=?'); $st->execute([$customerId,$month]); $inv=$st->fetch(PDO::FETCH_ASSOC); if(!$inv) return;
+    $st=$pdo->prepare('SELECT COALESCE(SUM(amount),0), MAX(id), MAX(paid_at) FROM payments WHERE customer_id=? AND invoice_month=?'); $st->execute([$customerId,$month]); $pay=$st->fetch(PDO::FETCH_NUM);
+    $paid=(int)($pay[0] ?? 0); $amount=(int)($inv['amount'] ?? 0); $balance=max(0,$amount-$paid); $status=$paid<=0?'unpaid':($balance>0?'partial':'paid');
+    $pdo->prepare('UPDATE invoices SET paid_amount=?,balance_amount=?,status=?,payment_id=?,paid_at=? WHERE id=?')->execute([$paid,$balance,$status,$pay[1]?:null,$status==='paid'?($pay[2]?:date('Y-m-d H:i:s')):'',(int)$inv['id']]);
+}
+function tenant_generate_monthly_invoices(PDO $pdo,string $month,bool $force=false): array {
+    $rows=$pdo->query("SELECT c.id,c.due_day,COALESCE(p.price,0) price FROM customers c LEFT JOIN packages p ON p.id=c.package_id WHERE c.customer_status='active' AND c.is_active=1 AND COALESCE(p.price,0)>0")->fetchAll(PDO::FETCH_ASSOC);
+    $created=0; $updated=0; $skipped=0;
+    foreach($rows as $r){ $cid=(int)$r['id']; $amount=(int)$r['price']; $due=(int)($r['due_day'] ?: 20); $code=tenant_invoice_code($cid,$month); $st=$pdo->prepare('SELECT * FROM invoices WHERE customer_id=? AND invoice_month=?'); $st->execute([$cid,$month]); $existing=$st->fetch(PDO::FETCH_ASSOC);
+        if($existing && !$force){ $skipped++; continue; }
+        if($existing){ if(($existing['status'] ?? 'unpaid')==='paid'){ $skipped++; continue; } $pdo->prepare('UPDATE invoices SET amount=?,original_amount=?,due_day=?,notes=?,balance_amount=? WHERE id=?')->execute([$amount,$amount,$due,'Auto update invoice bulanan',$amount-(int)($existing['paid_amount'] ?? 0),(int)$existing['id']]); $updated++; }
+        else { $pdo->prepare('INSERT INTO invoices(invoice_code,customer_id,invoice_month,amount,original_amount,due_day,status,notes,balance_amount,generated_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)')->execute([$code,$cid,$month,$amount,$amount,$due,'unpaid','Auto invoice bulanan',$amount,date('Y-m-d H:i:s'),date('Y-m-d H:i:s')]); $created++; }
+        tenant_recalc_invoice($pdo,$cid,$month);
+    }
+    return ['month'=>$month,'customers'=>count($rows),'created'=>$created,'updated'=>$updated,'skipped'=>$skipped];
+}
+function tenant_bank_label(array $r): string {
+    $label=trim((string)($r['bank_label'] ?? $r['label'] ?? '')); $bank=trim((string)($r['bank_name'] ?? '')); $num=trim((string)($r['account_number'] ?? ''));
+    return $label ?: trim($bank.($num!==''?' '.$num:'')) ?: (($r['method'] ?? '') ?: 'Cash');
 }
 
 function tenant_customer_code(PDO $pdo,string $input='',int $ignoreId=0): string {

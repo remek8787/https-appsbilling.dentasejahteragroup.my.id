@@ -397,3 +397,33 @@ Verification:
 Next porting priority:
 - Tagihan/invoice generation and manual add-tagihan.
 - Pembayaran tenant with package price, bank account selection, duplicate guard, and receipt/print using tenant logo.
+
+## 2026-07-16 01:12 UTC — Tenant V3 billing/payment core
+
+Status: deployed + smoke tested live.
+
+Implemented:
+- Tenant invoice schema migration: invoice code, customer/month uniqueness, original amount, discount, paid amount, balance, due day, status, payment reference.
+- Tenant payment schema migration: payment code, invoice/customer/month link, method, bank account, receiver, source metadata.
+- Real tenant pages replacing placeholders:
+  - `data-tagihan`
+  - `add-tagihan`
+  - `data-ipl`
+  - `data-sudah-bayar`
+  - `data-belum-bayar-7121`
+  - `add-laporan-ipl`
+- Monthly invoice generator per tenant with safe skip/update behavior.
+- Payment input recalculates invoice status/balance automatically.
+- Tenant receipt print page: `/tenant/print.php?type=receipt&id=...`.
+
+Verification:
+- Local PHP lint: `app/bootstrap.php`, `public/tenant/dashboard.php`, `public/tenant/print.php` OK.
+- Local smoke: generate invoice -> unpaid list -> save payment -> payment list -> receipt OK.
+- Live deploy backup: `/home/ubuntu/backups/appsbilling-before-tenant-billing-20260716-010931.tar.gz`.
+- Live PHP lint OK on engine + tenant root.
+- Live smoke: `LIVE_RECEIPT_OK pay=1` after fixing live bootstrap path fallback.
+- Preserved existing live paths: `/v3/login.php` and `/nms/` checked.
+
+Notes:
+- Receipt print has engine-path fallback because live tenant files are served from `/var/www/appsbilling.dentasejahteragroup.my.id/tenant`, while core bootstrap lives under `/var/www/appsbilling-commercial-platform/app/bootstrap.php`.
+- This is functional parity groundwork; visual polish and smaller tenant UX improvements should wait until main V3 feature modules are broadly usable.
