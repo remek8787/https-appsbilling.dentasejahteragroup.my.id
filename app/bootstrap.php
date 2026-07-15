@@ -81,10 +81,18 @@ function platform_migrate(PDO $pdo): void {
         name TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'admin',
         status TEXT NOT NULL DEFAULT 'active',
+        phone TEXT,
+        email TEXT,
+        notes TEXT,
         last_login_at TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT,
         UNIQUE(tenant_id, username)
     )");
+    ensure_column($pdo,'tenant_users','phone','TEXT');
+    ensure_column($pdo,'tenant_users','email','TEXT');
+    ensure_column($pdo,'tenant_users','notes','TEXT');
+    ensure_column($pdo,'tenant_users','updated_at','TEXT');
     $pdo->exec("CREATE TABLE IF NOT EXISTS tenant_databases(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         tenant_id INTEGER UNIQUE NOT NULL,

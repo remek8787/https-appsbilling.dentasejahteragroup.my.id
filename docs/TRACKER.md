@@ -451,3 +451,29 @@ Verification:
 
 Notes:
 - Corporate invoice is functional core first; print/PDF corporate invoice can be polished later after all V3 feature modules are usable per tenant.
+
+## 2026-07-16 01:28 UTC — Tenant V3 admin system core
+
+Status: deployed + smoke tested live.
+
+Implemented:
+- Platform `tenant_users` schema migration fields: phone, email, notes, updated_at.
+- Real tenant admin-system pages:
+  - `data-user`
+  - `add-user`
+  - `office-settings`
+  - `activity-log`
+- Existing `branding-settings` route preserved via `tenant/settings.php` and verified after deployment.
+- Tenant user management supports create user, role, status, contact fields, and active/inactive toggle.
+- Office settings saved in isolated tenant SQLite `settings` table: brand, office name/address/contact/city, default due day, timezone, invoice footer, receipt footer.
+- Activity log lists platform/tenant events from `tenant_events` for current tenant.
+
+Verification:
+- Local PHP lint OK: `app/bootstrap.php`, `public/tenant/dashboard.php`, `public/tenant/settings.php`.
+- Local smoke: add tenant user -> data-user contains user -> save office settings -> activity-log contains user/settings events -> branding-settings still renders.
+- Live backup: `/home/ubuntu/backups/appsbilling-before-tenant-admin-system-20260716-012732.tar.gz`.
+- Live PHP lint OK, `/v3/login.php` and `/nms/` preserved.
+- Live smoke: `LIVE_TENANT_ADMIN_SYSTEM_OK user=liveadm012734`.
+
+Next recommended module:
+- Continue tenant V3 PPPoE / installasi / tiket pelanggan core, then handle reporting/analysis and remaining smaller data modules.
