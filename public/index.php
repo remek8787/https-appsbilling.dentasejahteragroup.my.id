@@ -3,7 +3,7 @@
   <a class="brand" href="<?=app_url('index.php')?>"><span class="brand-mark">AB</span><span><strong>AppsBilling</strong><small>Platform Mitra ISP</small></span></a>
   <div class="nav-actions">
     <a class="btn btn-light" href="<?=app_url('tenant/login.php')?>">Login Mitra</a>
-    <a class="btn btn-light" href="<?=app_url('superadmin/login.php')?>">Superadmin</a>
+    <a class="btn btn-light" href="<?=app_url('superadmin/login.php')?>">Admin</a>
     <a class="btn btn-primary" href="<?=app_url('register.php')?>">Daftar Mitra</a>
   </div>
 </nav>
@@ -19,7 +19,7 @@
     </div>
     <div class="trust-row">
       <span>DB terpisah</span>
-      <span>Approval superadmin</span>
+      <span>Approval admin</span>
       <span>Siap berkembang ke V3 penuh</span>
     </div>
   </div>
@@ -51,7 +51,7 @@
   <div class="steps-list">
     <article class="step-card"><b>1</b><div><h3>Isi form pendaftaran</h3><p>Masukkan nama usaha, PIC, WhatsApp, area layanan, username, dan password admin. Contoh nama usaha: <strong>MRT NET</strong>.</p></div></article>
     <article class="step-card"><b>2</b><div><h3>Simpan No Akun</h3><p>Setelah form terkirim, sistem membuat No Akun 4 digit secara acak. Nomor ini menjadi identitas login mitra.</p></div></article>
-    <article class="step-card"><b>3</b><div><h3>Tunggu approval</h3><p>Superadmin mengecek data lalu menyetujui akun. Saat approve, database billing mitra dibuat otomatis.</p></div></article>
+    <article class="step-card"><b>3</b><div><h3>Tunggu approval</h3><p>Admin mengecek data lalu menyetujui akun. Saat approve, database billing mitra dibuat otomatis.</p></div></article>
     <article class="step-card"><b>4</b><div><h3>Masuk dashboard</h3><p>Mitra login memakai No Akun, username, dan password yang dibuat saat pendaftaran.</p></div></article>
   </div>
 </section>
@@ -59,7 +59,7 @@
 <section class="section feature-section">
   <div class="grid">
     <article class="card feature-card"><span>01</span><h3>Data aman per mitra</h3><p>Setiap mitra mendapat database sendiri agar pelanggan, tagihan, dan pembayaran tidak bercampur.</p></article>
-    <article class="card feature-card"><span>02</span><h3>Kontrol dari pusat</h3><p>Superadmin bisa approve, disable, reaktifkan, dan soft-delete akun tanpa menghapus data sembarangan.</p></article>
+    <article class="card feature-card"><span>02</span><h3>Kontrol dari pusat</h3><p>Admin bisa approve, disable, reaktifkan, dan soft-delete akun tanpa menghapus data sembarangan.</p></article>
     <article class="card feature-card"><span>03</span><h3>Siap tumbuh</h3><p>Fondasinya disiapkan untuk pelanggan, paket, invoice, pembayaran, kwitansi, dan laporan pendapatan.</p></article>
   </div>
 </section>

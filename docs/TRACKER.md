@@ -140,3 +140,28 @@ Verification:
 - `/v3/login.php` remained HTTP 200 and e-Billing DSG marker was verified.
 - `/nms/` remained available and redirected normally to operator access.
 - After live migration: `tenants=3`, `with_account_no=3`, `active=3`.
+
+## Stage 1.3 — Admin Label Polish (2026-07-15)
+
+Status: completed and live.
+
+User request:
+- Change visible `Superadmin` wording to `Admin` / `Login Admin`.
+
+Implemented:
+- Root nav label changed from `Superadmin` to `Admin`.
+- Admin login page title changed to `Login Admin` and heading `Admin`.
+- Registration/tutorial copy now says admin review/approval instead of superadmin.
+- Admin dashboard heading uses `Admin Mitra`.
+- Internal route remains `/superadmin/` to avoid unnecessary routing risk.
+
+Backup before deploy:
+- `/home/ubuntu/backups/appsbilling-root-before-admin-label-20260715-234627.tar.gz`
+
+Verification:
+- Syntax checks passed on live files.
+- Root page contains visible `Admin` label and no nav `Superadmin` label.
+- Admin login page shows `Admin` and `Panel admin`.
+- Registration page mentions `review admin`.
+- `/v3/login.php` still HTTP 200.
+- `/nms/` still responds with expected redirect.
