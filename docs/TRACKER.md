@@ -272,3 +272,30 @@ Verification:
 - Live data-warga and branding pages verified.
 - Original `/v3/login.php` still verified with e-Billing DSG marker.
 - `/nms/` still responds normally.
+
+## Stage 1.7 — Product Decision: Full V3 Feature Parity for Commercial Tenants (2026-07-16)
+
+Status: documented; implementation roadmap created.
+
+User decision:
+- `/v3/` is the personal/internal AppsBilling instance.
+- Root `https://appsbilling.dentasejahteragroup.my.id/` is the commercial multi-tenant platform.
+- Every tenant in commercial platform must get all AppsBilling V3 features and the full admin tutorial.
+- Each tenant uses its own No Akun, isolated empty DB, and custom app/receipt logo.
+- Commercial tenant should not be a different app; it should be V3 feature parity adapted to tenant DB isolation.
+
+Documentation updated:
+- `docs/COMMERCIAL_PLATFORM_BLUEPRINT.md`
+- `docs/V3_FEATURE_PARITY_ROADMAP_20260716.md`
+- `docs/TRACKER.md`
+
+Coret:
+- Commercial platform Coret board must be updated to reflect V3 private vs commercial tenant separation and full V3 feature parity roadmap.
+
+Implementation status:
+- V3-style tenant shell/menu already live.
+- Full module porting is pending and should be handled in safe phases:
+  1. Core billing harian: pelanggan, paket, tagihan, pembayaran, kwitansi.
+  2. Operasional ISP: tunggakan, free/off, diskon/deposit, penagihan.
+  3. Admin/tutorial: users, office settings, full tutorial, activity log.
+  4. Advanced: corporate, PPPoE, import/export, tenant-safe PWA.

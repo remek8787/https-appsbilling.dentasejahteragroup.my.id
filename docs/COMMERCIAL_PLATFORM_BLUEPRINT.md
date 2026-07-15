@@ -3,7 +3,7 @@ title: "AppsBilling Commercial Platform Blueprint"
 description: "Blueprint SaaS/multi-mitra untuk AppsBilling komersial di root appsbilling.dentasejahteragroup.my.id."
 project: "https-appsbilling.dentasejahteragroup.my.id"
 created: "2026-07-15"
-updated: "2026-07-15"
+updated: "2026-07-16"
 tags: [appsbilling, commercial, saas, multi-tenant, mitra, billing-v3, php, sqlite]
 ---
 
@@ -20,6 +20,22 @@ Project baru untuk menjadikan AppsBilling V3 sebagai platform komersial multi-mi
 - Web root live saat ini: `/var/www/appsbilling.dentasejahteragroup.my.id`
 
 Tujuan utama: platform billing komersial seperti AppsBilling V3 DSG/Borneo, tetapi setiap mitra/client punya akun, ruang kerja, branding, dan database masing-masing.
+
+## Keputusan Arsitektur 2026-07-16 — V3 Pribadi vs Commercial Tenant
+
+Tuan Besar menetapkan pemisahan produk yang wajib diikuti:
+
+- **AppsBilling DSG V3 di `/v3/` adalah versi pribadi/internal** milik Tuan Besar/PT Denta Sejahtera Group.
+- **Root `https://appsbilling.dentasejahteragroup.my.id/` adalah AppsBilling Commercial Platform** untuk mitra/tenant.
+- Commercial platform tidak boleh hanya menjadi shell berbeda. Setiap tenant harus mendapatkan pengalaman dan fungsi yang sama seperti AppsBilling V3.
+- Perbedaan tenant commercial hanya pada:
+  - identitas login memakai **No Akun**;
+  - setiap tenant punya **database sendiri** yang awalnya kosong;
+  - setiap tenant bisa memakai **logo aplikasi dan logo kwitansi sendiri**;
+  - admin pusat bisa masuk ke tenant aktif untuk bantuan/setup;
+  - `/v3/` pribadi tetap tidak disentuh/dicampur.
+
+Prinsip produk: **AppsBilling V3 pribadi menjadi referensi/master flow; commercial tenant adalah versi multi-tenant yang fiturnya dipindahkan lengkap ke DB tenant masing-masing.**
 
 ## Keputusan Awal
 

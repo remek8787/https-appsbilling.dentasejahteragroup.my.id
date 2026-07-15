@@ -14,3 +14,9 @@ This project is planned as a SaaS-style platform based on the proven AppsBilling
 See `docs/COMMERCIAL_PLATFORM_BLUEPRINT.md` and `docs/TRACKER.md`.
 
 Security note: never commit real passwords, hashes, tenant databases, or runtime storage.
+
+## Product Direction 2026-07-16
+
+`/v3/` is the private/internal AppsBilling instance. The root commercial platform is the multi-tenant product. Every commercial tenant should receive AppsBilling V3 feature parity, but with its own No Akun, isolated empty DB, and custom app/receipt logo. Do not mix tenant data with the private `/v3/` instance.
+
+Roadmap: `docs/V3_FEATURE_PARITY_ROADMAP_20260716.md`.
