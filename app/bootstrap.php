@@ -195,10 +195,72 @@ function provision_tenant_db(string $path,array $tenant): void {
     $st->execute(['office_brand',$tenant['company_name']]);
     $st->execute(['tenant_uid',$tenant['tenant_uid']]);
     $st->execute(['schema_version','commercial-v1']);
+    $st->execute(['copyright','PT Denta Sejahtera Group dan Ananta Satriya Ferdian']);
 }
 
 function log_event(?int $tenantId,string $actorType,?int $actorId,string $event,string $notes=''): void {
     execsql('INSERT INTO tenant_events(tenant_id,actor_type,actor_id,event_type,notes,created_at) VALUES(?,?,?,?,?,?)',[$tenantId,$actorType,$actorId,$event,$notes,now()]);
+}
+
+
+function app_contact_text(): string { return 'Silahkan lakukan konfirmasi ke sisi admin Ananta Satriya. WhatsApp: 085804783530'; }
+
+function tenant_public_upload_dir(array $tenant): string {
+    $root=getenv('PUBLIC_UPLOAD_ROOT') ?: '';
+    if($root===''){
+        $liveRoot='/var/www/appsbilling.dentasejahteragroup.my.id';
+        $root=is_dir($liveRoot) ? $liveRoot : base_path('public');
+    }
+    $dir=rtrim($root,'/').'/uploads/tenants/'.$tenant['tenant_uid'];
+    if(!is_dir($dir)) mkdir($dir,0775,true);
+    return $dir;
+}
+function tenant_public_upload_url(array $tenant,string $filename): string {
+    return app_url('uploads/tenants/'.$tenant['tenant_uid'].'/'.$filename);
+}
+function tenant_setting(PDO $pdo,string $key,?string $default=null): ?string {
+    $st=$pdo->prepare('SELECT value FROM settings WHERE key=?'); $st->execute([$key]); $v=$st->fetchColumn();
+    return $v===false ? $default : (string)$v;
+}
+function tenant_set_setting(PDO $pdo,string $key,string $value): void {
+    $st=$pdo->prepare('INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)'); $st->execute([$key,$value]);
+}
+function process_logo_upload(string $field,array $tenant,string $prefix,int $maxDim=900,int $maxBytes=524288): ?string {
+    if(empty($_FILES[$field]) || ($_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE)===UPLOAD_ERR_NO_FILE) return null;
+    $f=$_FILES[$field];
+    if(($f['error'] ?? UPLOAD_ERR_OK)!==UPLOAD_ERR_OK) throw new RuntimeException('Upload logo gagal. Coba ulangi file lain.');
+    if(($f['size'] ?? 0) > 5*1024*1024) throw new RuntimeException('File terlalu besar. Maksimal 5MB sebelum kompres.');
+    $tmp=(string)$f['tmp_name'];
+    $info=@getimagesize($tmp);
+    if(!$info) throw new RuntimeException('File harus berupa gambar JPG atau PNG.');
+    $mime=$info['mime'] ?? '';
+    if(!in_array($mime,['image/jpeg','image/png'],true)) throw new RuntimeException('Format logo harus JPG atau PNG.');
+    $dir=tenant_public_upload_dir($tenant);
+    $ext=$mime==='image/png' ? 'png' : 'jpg';
+    $filename=$prefix.'-'.date('YmdHis').'.'.$ext;
+    $dest=$dir.'/'.$filename;
+    if(function_exists('imagecreatetruecolor')){
+        $filename=$prefix.'-'.date('YmdHis').'.jpg';
+        $dest=$dir.'/'.$filename;
+        [$w,$h]=$info;
+        $scale=min(1,$maxDim/max($w,$h));
+        $nw=max(1,(int)round($w*$scale)); $nh=max(1,(int)round($h*$scale));
+        $src=$mime==='image/png' ? @imagecreatefrompng($tmp) : @imagecreatefromjpeg($tmp);
+        if(!$src) throw new RuntimeException('Gambar tidak bisa diproses.');
+        $canvas=imagecreatetruecolor($nw,$nh);
+        $white=imagecolorallocate($canvas,255,255,255);
+        imagefilledrectangle($canvas,0,0,$nw,$nh,$white);
+        imagecopyresampled($canvas,$src,0,0,0,0,$nw,$nh,$w,$h);
+        $quality=86;
+        do { imagejpeg($canvas,$dest,$quality); $quality-=8; } while(filesize($dest)>$maxBytes && $quality>=58);
+        imagedestroy($src); imagedestroy($canvas);
+        if(filesize($dest)>$maxBytes) throw new RuntimeException('Logo masih terlalu besar setelah kompres. Pakai file yang lebih kecil.');
+    } else {
+        if(($f['size'] ?? 0)>$maxBytes) throw new RuntimeException('Server belum mendukung kompres gambar otomatis. Maksimal file 512KB.');
+        if(!move_uploaded_file($tmp,$dest)) throw new RuntimeException('Gagal menyimpan logo.');
+    }
+    @chmod($dest,0644);
+    return $filename;
 }
 
 function render_header(string $title,string $bodyClass=''): void { ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e($title)?> · AppsBilling Commercial</title><link rel="stylesheet" href="<?=app_url('assets/app.css')?>"></head><body class="<?=e($bodyClass)?>"><?php }

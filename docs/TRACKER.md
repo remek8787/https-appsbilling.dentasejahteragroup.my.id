@@ -165,3 +165,39 @@ Verification:
 - Registration page mentions `review admin`.
 - `/v3/login.php` still HTTP 200.
 - `/nms/` still responds with expected redirect.
+
+## Stage 1.4 — Admin Detail + Tenant Branding Logos (2026-07-15)
+
+Status: completed and live.
+
+User request:
+- Admin can see concise account detail and disable accounts.
+- If account/no akun is not active, tenant login should show confirmation info to admin Ananta Satriya with WhatsApp `085804783530`.
+- Mitra can change app logo and receipt logo from dashboard.
+- Logo upload accepts JPG/PNG and should avoid huge files; auto-compress if server supports GD, otherwise enforce small safe size.
+- Copyright remains `PT Denta Sejahtera Group dan Ananta Satriya Ferdian`.
+
+Implemented:
+- New admin tenant detail page: `/superadmin/tenant_detail.php?id={tenant_id}`.
+- Admin list links to detail and includes a Detail action.
+- Detail page shows ringkasan akun, No Akun, tenant UID, internal slug, contact, DB state/path/schema, tenant stats, user list, activity events, and account controls.
+- Admin can approve, disable, and reactivate from detail page.
+- Tenant login now distinguishes inactive/disabled accounts and shows: `Silahkan lakukan konfirmasi ke sisi admin Ananta Satriya. WhatsApp: 085804783530`.
+- New tenant branding page: `/tenant/settings.php`.
+- Dashboard sidebar links to `Logo & Branding`.
+- Tenant can upload app logo and receipt logo; accepted types JPG/PNG.
+- Upload target file size is 512KB; server compresses/resizes if GD is available, otherwise only accepts already-small valid files.
+- Public tenant logo files are stored under `/uploads/tenants/{tenant_uid}/`.
+- Tenant DB settings store `app_logo`, `receipt_logo`, `office_brand`, and copyright.
+- Copyright text is displayed and kept as `PT Denta Sejahtera Group dan Ananta Satriya Ferdian`.
+
+Backup before deploy:
+- `/home/ubuntu/backups/appsbilling-root-before-admin-detail-logo-20260715-235651.tar.gz`
+
+Verification:
+- Local syntax checks passed.
+- Local flow passed: pending login notice, admin detail, approve, tenant settings, logo upload with valid PNG.
+- Live deploy syntax checks passed.
+- Live flow passed with `MRT NET FITUR LIVE ...`: register → pending login notice with WhatsApp admin → admin detail → approve → tenant login → logo settings → upload logo → public logo URL HTTP 200.
+- `/v3/login.php` still verified with e-Billing DSG marker.
+- `/nms/` still responds normally.
