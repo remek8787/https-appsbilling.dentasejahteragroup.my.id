@@ -59,6 +59,7 @@ function platform_migrate(PDO $pdo): void {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         tenant_uid TEXT UNIQUE NOT NULL,
         slug TEXT UNIQUE NOT NULL,
+        account_no TEXT UNIQUE,
         company_name TEXT NOT NULL,
         owner_name TEXT NOT NULL,
         phone TEXT NOT NULL,
@@ -101,8 +102,33 @@ function platform_migrate(PDO $pdo): void {
         notes TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    ensure_column($pdo,'tenants','account_no','TEXT');
+    backfill_account_numbers($pdo);
+    $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tenants_account_no ON tenants(account_no) WHERE account_no IS NOT NULL');
     seed_superadmin($pdo);
 }
+
+function ensure_column(PDO $pdo,string $table,string $column,string $definition): void {
+    $cols=$pdo->query('PRAGMA table_info('.$table.')')->fetchAll();
+    foreach($cols as $c){ if(($c['name']??'')===$column) return; }
+    $pdo->exec('ALTER TABLE '.$table.' ADD COLUMN '.$column.' '.$definition);
+}
+
+
+function backfill_account_numbers(PDO $pdo): void {
+    $rows=$pdo->query("SELECT id FROM tenants WHERE account_no IS NULL OR account_no='' ORDER BY id ASC")->fetchAll();
+    foreach($rows as $row){
+        do { $no=(string)random_int(1000,9999); $exists=$pdo->prepare('SELECT id FROM tenants WHERE account_no=?'); $exists->execute([$no]); } while($exists->fetch());
+        $st=$pdo->prepare('UPDATE tenants SET account_no=?, slug=? WHERE id=?');
+        $st->execute([$no,'acct-'.$no,(int)$row['id']]);
+    }
+}
+
+function generate_account_no(): string {
+    do { $no=(string)random_int(1000,9999); } while(q1('SELECT id FROM tenants WHERE account_no=?',[$no]));
+    return $no;
+}
+
 
 function seed_superadmin(PDO $pdo): void {
     $exists=$pdo->query("SELECT COUNT(*) FROM platform_admins")->fetchColumn();
@@ -137,7 +163,7 @@ function require_superadmin(): array {
 }
 function current_tenant_user(): ?array {
     $uid=$_SESSION['tenant_user_id']??0; if(!$uid) return null;
-    $u=q1('SELECT tu.*,t.tenant_uid,t.slug,t.company_name,t.status tenant_status FROM tenant_users tu JOIN tenants t ON t.id=tu.tenant_id WHERE tu.id=?',[(int)$uid]);
+    $u=q1('SELECT tu.*,t.tenant_uid,t.slug,t.account_no,t.company_name,t.status tenant_status FROM tenant_users tu JOIN tenants t ON t.id=tu.tenant_id WHERE tu.id=?',[(int)$uid]);
     if(!$u || $u['status']!=='active' || $u['tenant_status']!=='active'){ unset($_SESSION['tenant_user_id']); return null; }
     return $u;
 }

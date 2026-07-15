@@ -108,3 +108,35 @@ Verification:
 - `/nms/` still responds with expected 302 to operator access.
 - Root end-to-end test passed: register → superadmin approve → tenant DB provision → tenant login → dashboard.
 - Platform DB after test: tenants=2, active=2, tenant DBs=2.
+
+## Stage 1.2 — Human Polish + 4-Digit Account Number (2026-07-15)
+
+Status: completed and live.
+
+User request:
+- Make root landing less AI/template-looking.
+- Add registration tutorial.
+- Use example brand `MRT NET`, not Borneo.
+- Replace visible slug-login concept with random 4-digit numeric `No Akun` generated during registration.
+
+Implemented:
+- Redesigned root landing with a more product-like, human-friendly ISP billing narrative.
+- Added tutorial section: Daftar → Simpan No Akun → Approval → Login dashboard.
+- Updated registration form examples to `MRT NET` / `ops@mrtnet.id` / `adminmrt`.
+- Added `tenants.account_no` migration with safe backfill for existing tenants.
+- Registration now generates unique random 4-digit account number.
+- Tenant slug is now internal `acct-{account_no}`.
+- Tenant login now prefers No Akun Mitra + username + password.
+- Superadmin table shows No Akun.
+- Tenant dashboard shows No Akun.
+
+Backup before live deploy:
+- `/home/ubuntu/backups/appsbilling-root-before-human-polish-20260715-234038.tar.gz`
+
+Verification:
+- PHP lint passed locally and on server.
+- Local E2E passed with `MRT NET`: registration → 4 digit account no → approve → tenant login by account no → dashboard.
+- Live E2E passed with `MRT NET LIVE ...`: registration → account no generated (`^[0-9]{4}$`) → slug became `acct-{account_no}` → superadmin approve → tenant login by account no → dashboard.
+- `/v3/login.php` remained HTTP 200 and e-Billing DSG marker was verified.
+- `/nms/` remained available and redirected normally to operator access.
+- After live migration: `tenants=3`, `with_account_no=3`, `active=3`.
