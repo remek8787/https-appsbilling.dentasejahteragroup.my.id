@@ -40,3 +40,41 @@ Status: completed.
 - [x] Main branches: Product Vision, Superadmin Control, Mitra Registration, Tenant Billing V3, Data Isolation, Commercial UX, Deployment & Cutover, Roadmap.
 - [x] Sketch added for landing → registration → superadmin approval → tenant DB provisioning → tenant billing V3.
 - [x] Share link created and stored in `docs/CORET.md`.
+
+## Stage 1 — MVP Registration to Tenant Dashboard (2026-07-15)
+
+Status: deployed to preview and smoke-tested.
+
+Boundary respected:
+- Did not touch `/v3`.
+- Did not touch `/nms`.
+- Commercial preview deployed at `/commercial-preview/`.
+- Engine/storage deployed outside public web path at `/var/www/appsbilling-commercial-platform`.
+
+Implemented:
+- Commercial landing page.
+- Mitra registration form.
+- Platform DB migration/seed.
+- Superadmin login.
+- Superadmin tenant list with approve, disable, reactivate, soft delete.
+- Tenant DB provisioning with isolated SQLite per tenant.
+- Tenant login.
+- Tenant dashboard shell with separate DB stats.
+
+Security:
+- Superadmin password stored as server-side hash in `.env`, not committed.
+- `.env`, storage, platform DB, and tenant DB are outside public preview path.
+- Tenant delete is soft delete; DB is not automatically removed.
+
+Verification:
+- Local PHP lint passed for all files.
+- Local end-to-end test passed: register → superadmin login → approve → tenant login → dashboard.
+- Public preview HTTP 200 checked for landing, register, superadmin login, and tenant login.
+- Public preview end-to-end test passed.
+- Platform DB after smoke test: tenants=1, active=1, tenant DBs=1.
+
+Preview URLs:
+- Landing: `https://appsbilling.dentasejahteragroup.my.id/commercial-preview/`
+- Registrasi mitra: `https://appsbilling.dentasejahteragroup.my.id/commercial-preview/register.php`
+- Superadmin: `https://appsbilling.dentasejahteragroup.my.id/commercial-preview/superadmin/login.php`
+- Tenant login: `https://appsbilling.dentasejahteragroup.my.id/commercial-preview/tenant/login.php`

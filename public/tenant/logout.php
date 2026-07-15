@@ -1,0 +1,1 @@
+<?php require (is_file(__DIR__.'/../../app/bootstrap.php') ? __DIR__.'/../../app/bootstrap.php' : '/var/www/appsbilling-commercial-platform/app/bootstrap.php'); unset($_SESSION['tenant_user_id']); redirect(app_url('tenant/login.php'));
