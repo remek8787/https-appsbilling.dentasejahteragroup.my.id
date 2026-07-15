@@ -237,3 +237,94 @@ Mulai dari **MVP SaaS aman**:
 6. Import/export dan billing flow standar.
 7. Baru setelah stabil: plan/subscription, custom domain/subdomain, billing platform, dan tenant PWA branding.
 
+## Status Implementasi Tenant V3 — 2026-07-16 01:36 WITA
+
+Arahan terakhir Tuan Besar:
+
+- Fokus utama: **semua fungsi/fitur inti AppsBilling V3 bisa digunakan oleh tiap tenant**.
+- Jangan polish kecil dulu sampai fitur utama tenant usable.
+- Setelah batch admin-system selesai, project ini dipause dan akan pindah ke project berikutnya.
+
+Status live saat ini:
+
+- Root commercial platform live di `https://appsbilling.dentasejahteragroup.my.id/`.
+- Engine/storage tetap di `/var/www/appsbilling-commercial-platform`.
+- Public root tenant files di `/var/www/appsbilling.dentasejahteragroup.my.id/tenant`.
+- `/v3/` pribadi/internal masih utuh dan wajib tetap tidak disentuh.
+- `/nms/` masih utuh dan wajib tetap tidak disentuh.
+
+Modul tenant V3 yang sudah usable/live:
+
+1. **Commercial root + tenant provisioning**
+   - registrasi mitra;
+   - admin approval/disable/reactivate/detail;
+   - tenant DB SQLite terpisah per No Akun;
+   - tenant login by No Akun + username + password;
+   - master admin pusat `ananta` bisa login ke tenant aktif memakai password admin pusat.
+
+2. **Tenant V3 shell/menu**
+   - layout V3-like/AdminLTE;
+   - menu utama V3: Dashboard, Kelola data, Admin sistem, Corporate, Kelola pembayaran, Kelola PPPoE;
+   - branding/logo tenant di flow admin sistem.
+
+3. **Kelola data dasar**
+   - paket/tipe pembayaran: `data-tipe-pembayaran`, `add-package`;
+   - rekening: `data-rekening`, `add-bank`;
+   - pelanggan aktif/free/off: `data-warga`, `add-warga`, `data-pelanggan-free`, `data-pelanggan-off`, `add-pelanggan-off`.
+
+4. **Billing/payment core**
+   - tagihan: `data-tagihan`, `add-tagihan`, generator invoice bulanan;
+   - pembayaran: `data-ipl`, `add-laporan-ipl`, `data-sudah-bayar`, `data-belum-bayar-7121`;
+   - kwitansi: `/tenant/print.php?type=receipt&id=...`;
+   - status invoice unpaid/partial/paid dan balance otomatis dihitung ulang.
+
+5. **Corporate core**
+   - `corporate-customers`;
+   - `add-corporate-customer`;
+   - `corporate-invoices`;
+   - `add-corporate-invoice`;
+   - mark payment corporate sampai status lunas.
+
+6. **Admin sistem core**
+   - user tenant: `data-user`, `add-user`;
+   - role tenant: owner/admin/operator/collector/viewer;
+   - active/inactive toggle;
+   - office setting tenant: `office-settings`;
+   - logo/branding route preserved: `branding-settings` via `tenant/settings.php`;
+   - activity log tenant: `activity-log`.
+
+Backup live penting dari batch terakhir:
+
+- `/home/ubuntu/backups/appsbilling-before-tenant-billing-20260716-010931.tar.gz`
+- `/home/ubuntu/backups/appsbilling-before-tenant-corporate-20260716-012007.tar.gz`
+- `/home/ubuntu/backups/appsbilling-before-tenant-admin-system-20260716-012732.tar.gz`
+
+Commit GitHub penting:
+
+- `903b544` — tenant customer CRUD.
+- `58b8e19` — tenant billing/payment/receipt core.
+- `7096989` — tenant corporate billing core.
+- `31a1484` — tenant admin-system core.
+
+Gotcha implementasi yang wajib diingat:
+
+- Tenant DB lama sering sudah punya tabel, jadi **jangan mengandalkan `CREATE TABLE IF NOT EXISTS` saja**. Selalu tambahkan migrasi eksplisit/ALTER lewat helper schema.
+- Schema baru harus masuk ke flow provisioning tenant baru **dan** `tenant_ensure_v3_core_schema()` agar tenant lama ikut termigrasi.
+- Live tenant file memakai public root `/var/www/appsbilling.dentasejahteragroup.my.id/tenant`, sementara core bootstrap ada di `/var/www/appsbilling-commercial-platform/app/bootstrap.php`; file standalone seperti `print.php` perlu fallback path bootstrap.
+- Jangan deploy AppsBilling commercial via FTP billing lama. Correct live target adalah VM `43.134.122.109`.
+
+Next recommended when project resumes:
+
+1. **Kelola PPPoE core**
+   - `data-user-pppoe`;
+   - `data-session-ppoe`;
+   - `data-installasi`;
+   - `dashboard-ticket-pelanggan`.
+2. Lanjut modul operasional kecil V3:
+   - diskon/deposit;
+   - lokasi/router;
+   - pembayaran umum;
+   - collection team;
+   - dashboard income summary / income analysis.
+3. Baru setelah semua fungsi inti usable: polish kecil tenant/UI/tutorial lengkap.
+
