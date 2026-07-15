@@ -17,3 +17,6 @@ node_modules/
 /state/*.json
 /state/*.sqlite
 .DS_Store
+
+# Runtime tenant uploads
+public/uploads/
