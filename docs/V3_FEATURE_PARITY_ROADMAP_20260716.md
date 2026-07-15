@@ -10,6 +10,25 @@ Live root: `https://appsbilling.dentasejahteragroup.my.id/`
 - Setiap tenant memakai No Akun, DB sendiri, dan logo sendiri.
 - `/v3/` tidak boleh dicampur atau rusak saat fitur dipindahkan ke commercial.
 
+
+## Clarification 2026-07-16 — Clone, Not Approximation
+
+Commercial tenant target is a **V3 clone per account**, not a different app with similar pages.
+
+Required model:
+
+- UI must match AppsBilling V3.
+- Feature behavior must match AppsBilling V3.
+- Menu structure and admin tutorial must match AppsBilling V3.
+- Tenant DB starts empty for operational data.
+- Each No Akun/slug owns its own DB and uploaded logos.
+
+Operational tables that start empty include pelanggan, tipe pembayaran/paket, tagihan, pembayaran, router, rekening, lokasi, deposit, diskon, PPPoE, instalasi, tiket, corporate, and collection/batch data.
+
+Allowed seed data: tenant settings, tenant user, schema metadata, copyright, and branding defaults needed for the app to run.
+
+Implementation direction: port/copy V3 into a tenant-aware engine; do not invent a separate UX or simplified feature set.
+
 ## Target Akhir
 
 Setelah tenant login, operator mitra melihat aplikasi yang terasa seperti AppsBilling V3 lengkap, bukan platform shell. Semua data masuk ke SQLite tenant masing-masing.

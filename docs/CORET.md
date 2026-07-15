@@ -18,3 +18,12 @@ Coret board updated to reflect Tuan Besar's product decision:
 - Every commercial tenant must receive AppsBilling V3 feature parity and full admin tutorial.
 - Each tenant uses No Akun, isolated empty DB, and custom app/receipt logo.
 - V3 modules must be ported safely into tenant DB context without touching private `/v3` or `/nms`.
+
+## Update 2026-07-16 — Tenant Clone V3 DB Kosong
+
+Coret board updated again to clarify the tenant model more strictly:
+
+- Tenant commercial is a clone of AppsBilling V3 per No Akun/slug.
+- UI, features, flow, validation, pages, and admin tutorial should match `/v3`.
+- Operational DB data starts empty per tenant: pelanggan, tipe pembayaran/paket, tagihan, pembayaran, router, rekening, lokasi, deposit, diskon, PPPoE, instalasi, tiket, corporate, batch penagihan, etc.
+- Minimal seed is allowed only for settings/user/schema/copyright so the app can run.

@@ -299,3 +299,23 @@ Implementation status:
   2. Operasional ISP: tunggakan, free/off, diskon/deposit, penagihan.
   3. Admin/tutorial: users, office settings, full tutorial, activity log.
   4. Advanced: corporate, PPPoE, import/export, tenant-safe PWA.
+
+
+## Stage 1.8 — Final Tenant Model Clarification: V3 Clone + Empty Operational DB (2026-07-16)
+
+Status: documented.
+
+User clarified:
+- Tenant is not merely V3-style or loosely feature-parity.
+- Tenant must be a clone of `https://appsbilling.dentasejahteragroup.my.id/v3` per No Akun/slug.
+- UI, menus, functions, flows, validation, and admin tutorial should be the same as V3.
+- The only difference is data context: each tenant gets its own empty DB and custom logos.
+
+DB empty means:
+- Operational data is empty per tenant: pelanggan, tipe pembayaran/paket, tagihan, pembayaran, router, rekening, lokasi, deposit, diskon, PPPoE, instalasi, tiket, corporate, collection/batch, etc.
+- Minimal seed/settings are allowed only so the app runs: tenant identity, tenant user, schema version, default copyright/branding.
+
+Implementation implication:
+- Build/port a tenant-aware V3 clone engine.
+- Do not invent a separate tenant UX.
+- Keep private `/v3` separate and untouched.

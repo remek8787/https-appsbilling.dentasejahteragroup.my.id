@@ -37,6 +37,28 @@ Tuan Besar menetapkan pemisahan produk yang wajib diikuti:
 
 Prinsip produk: **AppsBilling V3 pribadi menjadi referensi/master flow; commercial tenant adalah versi multi-tenant yang fiturnya dipindahkan lengkap ke DB tenant masing-masing.**
 
+
+## Keputusan Final Tenant Model 2026-07-16 — Clone V3 dengan DB Kosong
+
+Definisi tenant commercial yang benar:
+
+- Tenant commercial adalah **clone AppsBilling V3 per No Akun/slug**, bukan aplikasi baru yang hanya mirip.
+- UI, menu, fitur, alur kerja, validasi, halaman, dan tutorial admin harus sama seperti `https://appsbilling.dentasejahteragroup.my.id/v3`.
+- Perbedaan hanya pada konteks data dan branding:
+  - setiap tenant memakai **No Akun/slug sendiri**;
+  - setiap tenant memakai **SQLite DB sendiri**;
+  - DB tenant dibuat dari schema/template V3 tetapi **data operasional kosong**;
+  - setiap tenant bisa upload logo aplikasi dan logo kwitansi sendiri;
+  - admin pusat bisa login ke tenant aktif untuk bantuan/setup.
+
+Yang dimaksud DB kosong:
+
+- Kosong: data pelanggan, data tipe pembayaran/paket, tagihan, pembayaran, router, rekening, lokasi, deposit, diskon, user PPPoE, sesi PPPoE, instalasi, tiket, corporate, batch penagihan, dan data operasional lain.
+- Boleh berisi seed minimal yang dibutuhkan aplikasi agar berjalan aman, misalnya setting dasar tenant, akun user tenant, schema version, dan default copyright.
+- Data contoh/demo dari `/v3` pribadi tidak boleh ikut masuk ke tenant commercial kecuali nanti diminta eksplisit.
+
+Prinsip implementasi: **copy/port V3 sebagai engine tenant-aware**, lalu semua akses database diarahkan ke DB tenant berdasarkan No Akun/slug/session tenant. `/v3` pribadi tetap menjadi instance terpisah dan tidak disentuh.
+
 ## Keputusan Awal
 
 - AppsBilling DSG V3 (`/v3/`) dan Borneo V3 tetap menjadi referensi fitur/operator flow.
