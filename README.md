@@ -24,3 +24,7 @@ Roadmap: `docs/V3_FEATURE_PARITY_ROADMAP_20260716.md`.
 ## Tenant Model Clarification
 
 Commercial tenants are intended to be **AppsBilling V3 clones per No Akun/slug**. UI, features, flows, and tutorial should match `/v3`; each tenant simply starts with an isolated empty operational DB and can use its own app/receipt logo.
+
+## Internal V3 Source
+
+The private/internal `/v3/` source is versioned separately under `internal-v3/`. This preserves the commercial root architecture while allowing audited V3 releases and rollback. Runtime SQLite databases, credentials, uploads, and backups are excluded.
