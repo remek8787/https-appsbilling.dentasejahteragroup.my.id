@@ -328,3 +328,27 @@ Next recommended when project resumes:
    - dashboard income summary / income analysis.
 3. Baru setelah semua fungsi inti usable: polish kecil tenant/UI/tutorial lengkap.
 
+
+## Customer Reward Points Standard — 2026-07-16
+
+This AppsBilling V3 instance should support the shared customer reward point concept:
+- Calculate automatic reward points from real payment date `payments.paid_at`.
+- Rules: day 1–5 = 10 points, day 6–10 = 5 points, day 11–20 = 3 points, day 21–end of month = 1 point.
+- Store movement history in `customer_points` and cached balance in `customers.points_balance`.
+- Payment create/edit syncs the automatic point row; payment delete removes the related automatic point row and recalculates balance.
+- Admin can manually add/subtract custom points from customer detail with notes/actor.
+- Show compact point badge in Data Pelanggan Aktif, overview in Dashboard, and point history in Detail Pelanggan.
+- Do not print points/rewards on receipt/kwitansi.
+
+## Posisi dalam Keluarga AppsBilling — 2026-07-20
+
+- Index deployment kanonis: `/root/.openclaw/workspace/notes/appsbilling-family-deployment-index.md`.
+- Peta visual Coret: https://coret.id/share/13359bbbbf7a0049023307cd7743a1e3fcc12cdeee87e2b4
+- Relasi: **root commercial multi-tenant; AppsBilling V3 pribadi adalah master flow, tetapi DB tidak dibagi**
+- Domain/slug: `https://appsbilling.dentasejahteragroup.my.id/` / `root`.
+- VPS: `43.134.122.109`.
+- Webroot live: `/var/www/appsbilling.dentasejahteragroup.my.id + engine /var/www/appsbilling-commercial-platform`.
+- Database live: `/var/www/appsbilling-commercial-platform/storage/platform.sqlite + storage/tenants/{tenant_uid}/billing.sqlite`.
+- Repo: `git@github.com:remek8787/https-appsbilling.dentasejahteragroup.my.id.git`.
+- Boundary: database, branding, konfigurasi, user, secret, dan data operasional tidak boleh disalin silang.
+
